@@ -10,6 +10,7 @@ fi
 shift; shift
 ```
 
+
 **Validate container argument**
 ```bash
 if loadopt "all" >/dev/null; then
