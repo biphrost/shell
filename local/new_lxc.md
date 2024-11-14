@@ -4,10 +4,10 @@ This assumes the setup laid out in [[build_lxc_host]].
 
 **Parameters**
 * `--copy`: create a copy of an existing container
-* `--hostnames`: set the hostnames for the new container
+* `--hostnames` (required): set the hostnames for the new container
 ```bash
 copy_from="$(loadopt "copy")"
-hostnames="$(loadopt "hostnames")"
+hostnames="$(needopt "hostnames")"
 ```
 
 **Start the log**
