@@ -200,98 +200,50 @@ sudo mkdir -p /etc/letsencrypt && sudo chmod 0644 /etc/letsencrypt
 wget https://raw.githubusercontent.com/dehydrated-io/dehydrated/master/docs/examples/config -q -O - | sed -e 's%^#\?\s*CHALLENGETYPE=.*$%CHALLENGETYPE="http-01"%' -e 's%^#\?\s*CONFIG_D=.*$%CONFIG_D="/etc/letsencrypt"%' -e "s%^#\\?[[:space:]]*CONTACT_EMAIL=.*\$%CONTACT_EMAIL=\"$sysadmin_email\"%" | sudo tee /etc/letsencrypt/config >/dev/null
 ```
 
-**Create an "update" shell script**
-This shell script will be called by the crontab of each individual lxc user account.
+**Set up timers to automatically renew container ssl certificates**
 ```bash
-cat <<'EOF' | sudo tee /usr/local/sbin/letsencrypt/update.sh >/dev/null
-#!/bin/bash
-#
-# Renew LetsEncrypt SSL certs for a container.
-#
-# Usage: update.sh [containername]
-#
-# [containername]: optional lxcNNNN identifier for the container to renew. If no containername
-# is provided, then update.sh will search for containers with SSL certs that are more than 60
-# days old, pick one at random, and try to renew it.
+cat <<EOF | sudo tee /etc/systemd/system/biphrost-ssl-renewal.service >/dev/null
+[Unit]
+Description=Biphrost automatic SSL renewal service
+After=network.target
+Wants=biphrost-ssl-renewal.timer
 
-if [ $# -lt 1 ]; then
-    target="$(find /home/*/ssl/* -maxdepth 1 -type d -ctime +60 -printf '%CY.%Cj %p\n' | shuf | head -n 1 | grep -oP '(?<=/home/)lxc[0-9]+')"
-else
-    target="$1"
-fi
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStartPre=
+ExecStart=/usr/local/sbin/biphrost ssl renew
 
-if [ -z "$target" ]; then
-    exit 1
-fi
-
-if [[ ! "$target" =~ lxc[0-9]{4} ]]; then
-    echo "Invalid container name: $target"
-    exit 1
-fi
-
-if [ ! -d "/home/$target" ]; then
-    echo "Error: there is no home directory for $target"
-    exit 1
-fi
-
-# Ensure the ssl and acme-challenge directories exist.
-firstrun=0
-if [ ! -d "/home/$target/ssl" ]; then
-    firstrun=1
-    mkdir -p "/home/$target/ssl"
-fi
-mkdir -p "/home/$target/acme-challenge"
-
-# Get the hostnames that are being routed to this container.
-# They should all be listed in /etc/hosts.
-# Here is what this mess does:
-#     1. Get all the lines from /etc/hosts that start with "10.", followed by
-#        the lxc name we're looking for;
-#     2. Get all of the hostnames on each of those lines (this will work even
-#        if there are multiple matching lines);
-#     3. Convert it into a series of lines, one hostname per line;
-#     4. Remove any duplicate entries;
-#     5. Output the length of each hostname along with the hostname;
-#     6. Sort by hostname length (shortest to longest);
-#     7. Print just the hostname on each line;
-#     8. Merge all of the lines into a single space-separated line;
-#     9. Output this to the lxc's hostnames file.
-if [ -x /usr/local/sbin/biphrost ]; then
-    /usr/local/sbin/biphrost -b get hostnames "$target" --verify | xargs | tee "/home/$target/ssl/hostnames" >/dev/null
-else
-    grep -o "^10\\.[0-9\\.]\\+[[:space:]]\\+$target[[:space:]]\\+.*$" /etc/hosts | sed -e "s/^10\\.[0-9\\.]\\+[[:space:]]\\+$target[[:space:]]\\+//" -e 's/\s\+/\n/g' | sort -u | while read -r hostname; do
-        echo ${#hostname} "$hostname"
-    done | sort -n | cut -d ' ' -f 2 | xargs | tee "/home/$target/ssl/hostnames" >/dev/null
-fi
-
-if [ ! -s "/home/$target/ssl/hostnames" ]; then
-    echo "Error: failed to generate the hostnames file for $target"
-    exit 1
-fi
-
-# Dehydrated doesn't offer a way to use a different .well-known directory on
-# the commandline and doesn't offer a way to include config files, and we want
-# each container user to handle its own LetsEncrypt renewal. So, copy the
-# current Dehydrated global config, rewrite the wellknown parameter, and continue.
-cp /etc/letsencrypt/config "/home/$target/le_config"
-sed -i -e "s%^#\\?[[:space:]]*WELLKNOWN=.*\$%WELLKNOWN=\"/home/$target/acme-challenge\"%" "/home/$target/le_config"
-
-# If this is the first run for Dehydrated for this host, then terms etc. need
-# to be accepted.
-if [ $firstrun -gt 0 ]; then
-    /usr/local/sbin/letsencrypt/dehydrated -f "/home/$target/le_config" --domains-txt "/home/$target/ssl/hostnames" -o "/home/$target/ssl" --register --accept-terms
-fi
-
-# Request a LetsEncrypt update and exit with its status code.
-/usr/local/sbin/letsencrypt/dehydrated -f "/home/$target/le_config" --domains-txt "/home/$target/ssl/hostnames" -o "/home/$target/ssl" -c
-exitcode=$?
-
-# Cleanup.
-rm "/home/$target/le_config"
-
-exit $exitcode
+[Install]
+WantedBy=multi-user.target
 EOF
-sudo chmod 0755 /usr/local/sbin/letsencrypt/update.sh
+```
+
+A random time to run the certificate renewal is generated between 23:00 and 02:59. `fold -w 2` is used here because `grep` is line-based and `-m 1` won't exit until it receives a newline from the input.
+```bash
+hour="$(tr -dc '0-9' </dev/urandom | fold -w 2 | grep -m 1 '\(23\|00\|01\|02\)')"
+minute="$(tr -dc '0-9' </dev/urandom | fold -w 2 | grep -m 1 '[0-5][0-9]')"
+cat <<EOF | sudo tee /etc/systemd/system/biphrost-ssl-renewal.timer >/dev/null
+[Unit]
+Description=Biphrost automatic SSL renewal timer
+Requires=biphrost-ssl-renewal.service
+
+[Timer]
+Unit=biphrost-ssl-renewal.service
+OnCalendar=*-*-* $hour:$minute:00
+AccuracySec=60s
+
+[Install]
+WantedBy=timers.target
+EOF
+```
+
+```bash
+systemctl daemon-reload
+systemctl enable biphrost-ssl-renewal.service
+systemctl enable biphrost-ssl-renewal.timer
+systemctl start biphrost-ssl-renewal.timer
 ```
 
 
