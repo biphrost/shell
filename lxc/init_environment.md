@@ -26,9 +26,9 @@ This isn't an aggressive stripdown of preinstalled packages, but we can nuke a f
 * `exim4-base` was added to this list because the package managed to land in Debian repos with a problem and it doesn't seem to be required by anything else.
 * `ssl_cert` was added to this list also because it landed in Debian repos with a problem, isn't required by anything else, and was causing `apt` operations to fail.
 ```bash
-if apt-get -y purge joe gcc-9-base libavahi* exim4-base ssl_cert >/dev/null && apt-get -y autoremove >/dev/null; then
-    echo "$(date +'%T') Removed cruft"
-fi
+apt-get -y purge joe gcc-9-base libavahi* exim4-base ssl_cert >/dev/null 2>&1
+apt-get -y autoremove >/dev/null 2>&1
+echo "$(date +'%T') Removed cruft"
 if apt-get -y update >/dev/null; then
     echo "$(date +'%T') Retrieved package updates"
 fi
