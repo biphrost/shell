@@ -1,48 +1,59 @@
 # Configure hostnames inside a container
 
-This command gets invoked by a Biphrost local script, which has already handled hostname validation.
+Hostname validation has already been handled by the biphrost script that calls this script.
 
 The primary hostname should be the first hostname provided in the argument list.
+
+**Usage**
+```
+biphrost @<container-id> set hostnames primaryhostname hostname2 hostname3 etc
+```
+
+**Sanity-check invocation**
+```bash
+myinvocation="set hostnames"
+if [ "${*:1:2}" != "$myinvocation" ]; then
+    fail "[$myinvocation]: Invalid invocation"
+fi
+shift; shift
+```
 
 **TODO**
 * Update Apache/etc. config in the container
 
-**Load hostnames from argument list**
+**Load hostnames from the argument list**
+The primary hostname is expected to be the first argument in the list.
 ```bash
-if [ "${*:1:2}" = "set hostnames" ]; then
-    shift; shift
-else
-    fail "Invalid invocation"
-fi
 if [ $# -lt 1 ]; then
     fail "No hostnames given"
 fi
-```
-
-**Get the default hostname from the argument list**
-This is expected to be the first argument in the list.
-```bash
 all_hostnames="$*"
 default_hostname="$1"
 shift
 alias_names="$*"
 ```
 
+**Get the container label or hostname**
+Used for logging.
+```bash
+containerid="$(cat /root/.label 2>/dev/null <(hostname) | head -n 1)"
+```
+
 **Start the log**
 ```bash
-echo "$(date +'%T')" "$(date +'%F')" "Setting hostnames: $all_hostnames"
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Setting hostnames: $all_hostnames"
 ```
 
 **Set the primary hostname in the container**
 ```bash
-echo "$(date +'%T') Setting primary hostname."
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Setting primary hostname."
 echo "$default_hostname" | tee /etc/hostname >/dev/null
 hostname -F /etc/hostname
 ```
 
 **Regenerate the hosts file for the container.**
 ```bash
-echo "$(date +'%T') Updating hosts file."
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Updating hosts file."
 cat <<EOF | tee /etc/hosts >/dev/null
 # IP4
 127.0.0.1          $all_hostnames localhost
@@ -62,11 +73,11 @@ Pretty much all containers should have at most one Apache site configuration. Th
 apache_config="$(find /etc/apache2/sites-available -maxdepth 1 -type f -regex '.*/.*[A-Za-z0-9-]+\.[a-z]+\.conf$')"
 count="$(echo -n "$apache_config" | grep -c '^')"
 if [ "$count" -eq 0 ]; then
-    echo "$(date +'%T') No Apache config files found; skipping reconfiguration."
+    echo "$(date +'%F')" "$(date +'%T')" "$containerid" "No Apache config files found; skipping reconfiguration."
 elif [ "$count" -gt 1 ]; then
-    echo "$(date +'%T') More than one Apache config file was found; skipping reconfiguration."
+    echo "$(date +'%F')" "$(date +'%T')" "$containerid" "More than one Apache config file was found; skipping reconfiguration."
 else
-    echo "$(date +'%T') Updating Apache configuration at $apache_config"
+    echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Updating Apache configuration at $apache_config"
     sed -i 's/\(\s*#\?\s*ServerName\s\+\).*$/\1'"$default_hostname"'/g' "$apache_config"
     sed -i 's/\(\s*#\?\s*ServerAlias\s\+\).*$/\1'"$alias_names"'/g' "$apache_config"
 fi
@@ -78,7 +89,7 @@ apachectl graceful
 
 **Done.**
 ```bash
-echo "$(date +'%T') Hostname configuration completed."
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Hostname configuration completed."
 ```
 
 
