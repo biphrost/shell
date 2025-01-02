@@ -31,7 +31,7 @@ shift
 
 **Start the log**
 ```bash
-echo "$(date +'%T')" "$(date +'%F')" "$container" "Updating container label"
+echo "$(date +'%F')" "$(date +'%T')" "$container" "Updating container label"
 ```
 
 **Verify that the container exists and is running.**
