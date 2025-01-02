@@ -40,10 +40,10 @@ case $(biphrost -b status "$container") in
     RUNNING)
     ;;
     NOTFOUND)
-        fail "$(date +'%T')" "$(date +'%F')" "$container" "Container does not exist"
+        fail "$(date +'%F')" "$(date +'%T')" "$container" "Container does not exist"
     ;;
     *)
-        fail "$(date +'%T')" "$(date +'%F')" "$container" "Container is not running"
+        fail "$(date +'%F')" "$(date +'%T')" "$container" "Container is not running"
     ;;
 esac
 ```
