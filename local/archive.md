@@ -13,7 +13,7 @@ confirmation="$(loadopt "confirm")"
 **Sanity-check invocation**
 ```bash
 myinvocation="archive"
-if [ "${*:1:2}" != "$myinvocation" ]; then
+if [ "${*:1:1}" != "$myinvocation" ]; then
     fail "[$myinvocation]: Invalid invocation"
 fi
 shift
