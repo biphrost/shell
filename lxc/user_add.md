@@ -54,11 +54,11 @@ if getent passwd "$username" >/dev/null; then
 else
     adduser --quiet --disabled-password --gecos '' "$username" 2>&1 || fail "Error while creating user \"$username\""
     usermod -a -G lxcusers "$username"
-    mkdir -p "/home/$username/.ssh"
-    touch "/home/$username/.ssh/authorized_keys"
-    chown -R "$username":"$username" "/home/$username/.ssh"
-    chmod 0700 "/home/$username/.ssh"
-    chmod 0600 "/home/$username/.ssh/authorized_keys"
     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Created new user account \"$username\"."
 fi
+mkdir -p "/home/$username/.ssh"
+touch "/home/$username/.ssh/authorized_keys"
+chown -R "$username":"$username" "/home/$username/.ssh"
+chmod 0700 "/home/$username/.ssh"
+chmod 0600 "/home/$username/.ssh/authorized_keys"
 ```
