@@ -27,6 +27,7 @@ shift
 ```
 
 **Get the container label or hostname**
+Used for logging.
 ```bash
 containerid="$(cat /root/.label 2>/dev/null <(hostname) | head -n 1)"
 ```
