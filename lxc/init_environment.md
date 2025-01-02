@@ -18,7 +18,7 @@ localedef -i en_US -f UTF-8 en_US.UTF-8
 
 **Start the log**
 ```bash
-echo "$(date +'%T')" "$(date +'%F')" "$containerid" "Initializing operating system environment"
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Initializing operating system environment"
 ```
 
 **Update packages, install some common requirements**
@@ -28,15 +28,15 @@ This isn't an aggressive stripdown of preinstalled packages, but we can nuke a f
 ```bash
 apt-get -y purge joe gcc-9-base libavahi* exim4-base ssl_cert >/dev/null 2>&1
 apt-get -y autoremove >/dev/null 2>&1
-echo "$(date +'%T')" "$(date +'%F')" "$containerid" "Removed cruft"
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Removed cruft"
 if apt-get -y update >/dev/null; then
-     echo "$(date +'%T')" "$(date +'%F')" "$containerid" "Retrieved package updates"
+     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Retrieved package updates"
 fi
 if apt-get -y upgrade >/dev/null; then
-     echo "$(date +'%T')" "$(date +'%F')" "$containerid" "Installed package updates"
+     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Installed package updates"
 fi
 if apt-get -y install apt-utils patch sudo rsync openssh-server git logrotate >/dev/null; then
-     echo "$(date +'%T')" "$(date +'%F')" "$containerid" "Installed apt-utils, patch, sudo, rsync, sshd, git, and logrotate"
+     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Installed apt-utils, patch, sudo, rsync, sshd, git, and logrotate"
 fi
 ```
 
