@@ -12,7 +12,7 @@ hostnames="$(needopt "hostnames")"
 
 **Start the log**
 ```bash
-echo "$(date +'%T')" "$(date +'%F')" "Creating a new LXC container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Creating a new LXC container"
 ```
 
 **Create the unprivileged lxc user**
@@ -21,7 +21,7 @@ This scans the host system for existing lxc users and generates a new lxc userna
 * If /usr/local/sbin/lxc_login is being used to juggle inbound ssh connections, then the shell needs to be changed to `/usr/bin/bash`.
 ```bash
 container=$(printf 'lxc%04d' $(( 10#"$(echo 'lxc0000' | cat - /etc/passwd | grep -Po '(?<=^lxc)[0-9]+' | sort -r | head -n 1)" + 1)))
-echo "$(date +'%T')" "Container will be $container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Container will be $container"
 sudo adduser --disabled-login --shell /usr/bin/false --quiet --gecos "" "$container" >/dev/null 2>&1
 sudo usermod -a -G lxcusers "$container" >/dev/null 2>&1
 sudo mkdir -p "/home/$container/.config/lxc"
@@ -36,7 +36,7 @@ sudo chown -R "$container":"$container" "/home/$container"
 **Create the user's lxc config files**
 These values will get compiled by the `lxc-create` command into a container runtime config file in `/srv/lxc/$lxcusername/config`; if you need to mess about with a container's configuration without destroying and rebuilding it, then edit that file instead.
 ```bash
-echo "$(date +'%T')" "Creating config files"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Creating config files"
 uidmap=$(sed -n "s/^$container:\\([0-9]\\+\\):\\([0-9]\\+\\)/\\1 \\2/p" /etc/subuid)
 gidmap=$(sed -n "s/^$container:\\([0-9]\\+\\):\\([0-9]\\+\\)/\\1 \\2/p" /etc/subgid)
 cat <<EOF | sudo -u "$container" tee /home/"$container"/.config/lxc/default.conf >/dev/null
@@ -61,7 +61,7 @@ sudo setfacl -m u:"$hostuid":x /home/"$container"/.local/share
 # The following line figures out the next available IP address
 nextip="10.0.0.$(diff -u <(grep -Po '^10\.[0-9\.]+' /etc/hosts | cut -d '.' -f 4 | sort -n) <(seq 2 254) | grep -Po '(?<=^\+)[0-9]+$' | head -n 1)"
 echo "$nextip    $container" | sudo tee -a /etc/hosts >/dev/null
-echo "$(date +'%T')" "$container's local IP will be $nextip"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "$container's local IP will be $nextip"
 ```
 
 **Configure networking for the container**
@@ -79,7 +79,7 @@ EOF
 If the `--copy` parameter was used, then copy an existing container instead of creating a new one. Copied containers need file ownership fixed and their LXC config file updated. `-l INFO` is critical because `lxc-copy` will routinely fail without any output or debugging info otherwise.
 ```bash
 if [ -z "$copy_from" ]; then
-    echo "$(date +'%T')" "Downloading image"
+    echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Downloading image"
     sudo -u "$container" -- lxc-create -t download -B btrfs -n "$container" -- -d debian -r bullseye -a amd64 --keyserver keyserver.ubuntu.com >/dev/null 2>&1 && sleep 1
 else
     uid_from_base=$(sed -n "s/^$copy_from:\\([0-9]\\+\\):\\([0-9]\\+\\)/\\1/p" /etc/subuid)
@@ -128,15 +128,19 @@ sudo -u "$container" XDG_RUNTIME_DIR="/run/user/$(sudo -u "$container" -- id -u)
 ```
 
 **Start the container**
-Note: This command changed from "lxc-start" to "lxc-unpriv-start" in Debian 11 (Buster). Running "lxc-start" causes an incomprehensible error message on unprivileged accounts. Yay.
 ```bash
-echo "$(date +'%T')" "Starting $container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Starting $container"
 biphrost -b start "$container" || fail "Error starting $container"
+```
+
+**Set the container's label**
+```bash
+biphrost -b label update "$container"
 ```
 
 **Initialize the network inside the container**
 ```bash
-echo "$(date +'%T')" "Initializing network in $container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Initializing network in $container"
 declare -a default_names
 if [ -z "$hostnames" ]; then
     default_names=()
@@ -155,7 +159,7 @@ biphrost @"$container" init network --hostnames "${default_names[*]}"
 
 **Restart the container to ensure that the new network configuration starts cleanly**
 ```bash
-echo "$(date +'%T')" "Restarting $container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Restarting $container"
 biphrost -b restart "$container"
 ```
 
@@ -169,7 +173,7 @@ fi
 
 **Done**
 ```bash
-echo "$(date +'%T')" "Successfully created $container ($nextip)"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Successfully created $container ($nextip)"
 ```
 
 
