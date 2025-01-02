@@ -39,6 +39,7 @@ fi
 ```
 
 Otherwise, try to start it and wait for its status to change.
+Note: This command changed from "lxc-start" to "lxc-unpriv-start" in Debian 11 (Buster). Running "lxc-start" causes an incomprehensible error message on unprivileged accounts. Yay.
 ```bash
 start_time="$(date '+%s')"
 sudo -u "$container" lxc-unpriv-start -n "$container" 2>/dev/null
