@@ -72,6 +72,12 @@ if ($https = "") {
 perl -0777 -pi -e 's/\n(\h*)(if \(\$https = ""\) {)\h*\n\h*(return 301 https:\/\/\$server_name\$request_uri;)\h*\n\h*(})\h*/\n\1# \2\n\1#     \3\n\1# \4/' /etc/nginx/sites-available/"$containerid"
 ```
 
+**Reload nginx**
+```bash
+nginx -t || fail "There was an error while updating the nginx configuration for $containerid"
+service nginx restart
+```
+
 **Log the change**
 ```bash
 echo "$(date +'%F')" "$(date +'%T')" "${hostnames[0]}" "SSL has been disabled for $containerid: ${hostnames[*]}"
