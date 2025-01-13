@@ -52,7 +52,7 @@ fi
 ```
 
 **Test for `listen 443 ssl`**
-This must be presented and not commented. (The trailing `;` is not included in the pattern here because other http options may follow `ssl`.)
+This must be present and not commented. (The trailing `;` is not included in the pattern here because other http options may follow `ssl`.)
 ```bash
 if ! grep -q '^\s*listen 443 [^#;]*ssl\W' /etc/nginx/sites-available/"$containerid"; then
     echo "disabled"
