@@ -41,7 +41,6 @@ This is used for logging purposes at the end of this command.
 ```bash
 # shellcheck disable=SC2207
 hostnames=($(biphrost -b hostnames get "$containerid"))
-hostname="${hostnames[0]}"
 ```
 
 **Disable `listen 443 ssl`**
@@ -75,5 +74,5 @@ perl -0777 -pi -e 's/\n(\h*)(if \(\$https = ""\) {)\h*\n\h*(return 301 https:\/\
 
 **Log the change**
 ```bash
-echo "$(date +'%F')" "$(date +'%T')" "$hostname" "SSL has been disabled for $containerid: ${hostnames[*]}"
+echo "$(date +'%F')" "$(date +'%T')" "${hostnames[0]}" "SSL has been disabled for $containerid: ${hostnames[*]}"
 ```
