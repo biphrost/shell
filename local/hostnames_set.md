@@ -4,7 +4,7 @@ Updates local (lxc host) configuration with new hostnames for a container, and t
 
 **Usage**
 ```
-biphrost hostnames set <container-id> <hostname> <hostname> ...
+biphrost hostnames set <container-id> <hostname> [hostname] ...
 ```
 
 **Notes:**
@@ -85,6 +85,11 @@ I could almost turn the whole thing inside-out with some `include` statements an
 
 Trying to do what should be fairly straightforward things in nginx always makes me consider dropping it altogether and going back to Apache for this use case. Do the saved cycles really matter as much as all the time I've burned trying to find workarounds for dumb limitations in nginx configs?
 
+We can use the `ssl_*` commands to get and reset the SSL status for this site during the hostname update:
+```bash
+ssl_status="$(biphrost -b ssl status "$containerid")"
+```
+
 ```bash
 rm -f /etc/nginx/sites-enabled/"$containerid"
 rm -f /etc/nginx/sites-available/"$containerid"
@@ -140,6 +145,14 @@ sed -i 's/\$\$hostnames/'"$hostnames"'/g' /etc/nginx/sites-available/"$container
 # shellcheck disable=SC2016
 sed -i 's/\$\$primary_hostname/'"$primary_hostname"'/g' /etc/nginx/sites-available/"$containerid"
 ln -s /etc/nginx/sites-available/"$containerid" /etc/nginx/sites-enabled/"$containerid"
+```
+
+**Restore the site's SSL configuration**
+Re-enabling SSL here will automatically trigger a cert renewal if the hostname configuration has changed.
+```bash
+if [ "$ssl_status" = "enabled" ]; then
+    biphrost -b ssl enable "$containerid"
+fi
 ```
 
 **Test the configuration and reload**
