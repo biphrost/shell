@@ -82,3 +82,4 @@ service nginx restart
 ```bash
 echo "$(date +'%F')" "$(date +'%T')" "${hostnames[0]}" "SSL has been disabled for $containerid: ${hostnames[*]}"
 ```
+
