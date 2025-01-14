@@ -82,6 +82,7 @@ grep -o "^10\\.[0-9\\.]\\+[[:space:]]\\+$target[[:space:]]\\+.*$" /etc/hosts | s
 done | sort -n | cut -d ' ' -f 2 | xargs | tee "/home/$target/ssl/hostnames" >/dev/null  
 ```
 
+The `hostnames` file should be left in the container's home directory because it's used as a validation check when enabling SSL.
 ```bash
 if [ -x /usr/local/sbin/biphrost ]; then
     /usr/local/sbin/biphrost -b hostnames get "$target" --verify | xargs | tee "/home/$target/ssl/hostnames" >/dev/null
