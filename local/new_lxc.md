@@ -10,9 +10,34 @@ copy_from="$(loadopt "copy")"
 hostnames="$(needopt "hostnames")"
 ```
 
+**Get the hostnames and validate them**
+Ensure none of the hostnames match a "biphrost" pattern (that would be naughty). Any invalid hostnames will cause the entire operation to fail. The first hostname in the list becomes the default hostname.
+```bash
+# For a simple space-delimited list of things in a string, this really is the nicest way to convert
+# the string into an array. readarray et al all get more complicated. For one matter, readarray
+# will not collapse delimiters, i.e., "thing  thing2 thing3" causes an empty element to be added
+# to the array. The "right" ways, in this application, are all just a mess.
+# Shut up, shellcheck.
+# shellcheck disable=SC2206
+hostnames=($hostnames)
+# Shut up, shellcheck.
+# shellcheck disable=SC2068
+for hostname in ${hostnames[@]}; do
+    if ! [[ "$hostname" =~ ^([A-Za-z0-9-]+\.)+[A-Za-z0-9-]+$ ]]; then
+        fail "Invalid hostname: $hostname does not look like a routable network hostname"
+    fi
+    #if [[ "$hostname" =~ "biphrost" ]]; then
+    #    fail "Invalid hostname: $hostname (cannot contain 'biphrost')"
+    #fi
+done
+if [ ${#hostnames[@]} -eq 0 ]; then
+    fail "No valid hostnames were given"
+fi
+```
+
 **Start the log**
 ```bash
-echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Creating a new LXC container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Creating a new LXC container with hostnames: ${hostnames[*]}"
 ```
 
 **Create the unprivileged lxc user**
@@ -141,20 +166,9 @@ biphrost -b label update "$container"
 **Initialize the network inside the container**
 ```bash
 echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Initializing network in $container"
-declare -a default_names
-if [ -z "$hostnames" ]; then
-    default_names=()
-    if [[ "$(hostname --fqdn)" =~ [^\.]+\.[^\.]+ ]]; then
-        default_names+=("$container"."$(hostname --fqdn)")
-    fi
-    default_names+=("$container")
-else
-    # shellcheck disable=SC2206
-    default_names=($hostnames)
-fi
-default_names+=("$container")
-default_names+=("localhost")
-biphrost @"$container" init network --hostnames "${default_names[*]}"
+biphrost @"$container" init network
+# shellcheck disable=SC2048,SC2086
+biphrost @"$container" set hostnames ${hostnames[*]}
 ```
 
 **Restart the container to ensure that the new network configuration starts cleanly**
