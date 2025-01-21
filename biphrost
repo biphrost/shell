@@ -787,8 +787,7 @@ else
         if [ -z "$command_script" ]; then
             fail "No matching command script found for \"$*\""
         else
-            # shellcheck disable=SC2046
-            /bin/bash "$command_script" "$@" $( (( ${#longopts[@]} )) && printf '%q ' "${longopts[@]}")
+            /bin/bash "$command_script" "$@" "${longopts[@]}"
             status=$?
         fi
     else
