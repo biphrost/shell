@@ -1,14 +1,10 @@
 # Auto-Configure MySQL (or MariaDB)
 
-## Description
-
-This document auto-configures a previously-installed MySQL (or MariaDB) for low-memory VPS environments.
-
-## Steps
+This command auto-configures a previously-installed MySQL (or MariaDB) for low-memory VPS environments.
 
 **Make sure MySQL or MariaDB is already installed**
 ```bash
-sudo sudo dpkg -l mariadb-server 2>/dev/null || sudo dpkg -l mysql-server 2>/dev/null || fail "MariaDB or MySQL are not installed"
+dpkg -l mariadb-server >/dev/null 2>&1 || dpkg -l mysql-server >/dev/null 2>&1 || fail "MariaDB or MySQL are not installed"
 ```
 
 **Adjust MySQL performance for low memory VPS environments**
@@ -56,7 +52,7 @@ join_buffer_size="$(printf '%sK' "$((base_mem_value * 1020 / max_connections / 4
 ```
 
 ```bash
-cat <<EOF | sudo tee /etc/mysql/conf.d/mysql.cnf
+cat <<EOF | tee /etc/mysql/conf.d/mysql.cnf >/dev/null
 #
 # MySQL tuning for low memory environments.
 #
@@ -71,7 +67,7 @@ socket                    = /var/run/mysqld/mysqld.sock
 datadir                   = /var/lib/mysql
 log-error                 = /var/log/mysql/error.log
 bind-address              = 127.0.0.1
-skip-networking           = 1
+skip-networking           = 1
 skip_name_resolve
 skip_external_locking
 performance_schema        = off
@@ -113,12 +109,14 @@ EOF
 
 **Clean up**
 ```bash
-sudo service mysql restart
+service mysql restart
 ```
 
 **Test login**
 ```bash
-echo -e 'SELECT "OK";' | sudo mysql -s || { fail "Could not connect to the MySQL server process as root"; }
+if ! echo -e 'SELECT "OK";' | sudo mysql -s; then
+    fail "Could not connect to the MySQL server process as root";
+fi
 ```
 
 ## References
