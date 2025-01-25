@@ -24,5 +24,5 @@ biphrost -b start "$container" || fail ""
 
 Notify user.
 ```bash
-echo "$(date +'%T')" "Successfully restarted $container"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Successfully restarted $container"
 ```
