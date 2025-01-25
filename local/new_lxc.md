@@ -146,8 +146,8 @@ EOF
 
 **Tell systemd to automatically start this service on reboot**
 ```bash
-sudo chown "$container:$container" "/home/$container/.config/systemd/user/$container-autostart.service"
-sudo loginctl enable-linger "$container"
+chown "$container:$container" "/home/$container/.config/systemd/user/$container-autostart.service"
+loginctl enable-linger "$container"
 sudo -u "$container" XDG_RUNTIME_DIR="/run/user/$(sudo -u "$container" -- id -u)" -- systemctl --user enable "$container-autostart"
 sudo -u "$container" XDG_RUNTIME_DIR="/run/user/$(sudo -u "$container" -- id -u)" -- systemctl --user start "$container-autostart"
 ```
@@ -166,9 +166,9 @@ biphrost -b label update "$container"
 **Initialize the network inside the container**
 ```bash
 echo "$(date +'%F')" "$(date +'%T')" "$(hostname)" "Initializing network in $container"
-biphrost @"$container" init network
+biphrost -b @"$container" init network
 # shellcheck disable=SC2048,SC2086
-biphrost @"$container" set hostnames ${hostnames[*]}
+biphrost -b @"$container" set hostnames ${hostnames[*]}
 ```
 
 **Restart the container to ensure that the new network configuration starts cleanly**
@@ -181,7 +181,7 @@ biphrost -b restart "$container"
 This step is skipped if the new container was copied from another container.
 ```bash
 if [ -z "$copy_from" ]; then
-    sudo biphrost @"$container" init environment --label "$container"
+    sudo biphrost -b @"$container" init environment --label "$container"
 fi
 ```
 
