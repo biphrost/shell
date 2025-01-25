@@ -67,7 +67,7 @@ update-alternatives --set editor /usr/bin/vim.basic
 update-alternatives --set vi /usr/bin/vim.basic
 ```
 
-**Create the LXC group**
+**Create the LXC users group**
 This is an unprivileged group that will be used for ssh users as well as some services.
 ```bash
 if ! getent group lxcusers; then
