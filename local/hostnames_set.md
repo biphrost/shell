@@ -90,31 +90,32 @@ We can use the `ssl_*` commands to get and reset the SSL status for this site du
 ssl_status="$(biphrost -b ssl status "$containerid")"
 ```
 
+Additionally, there's an nginx ... bug? issue? wontfix unexpected behavior? ... that causes it to need a resolver if `proxy_pass` references a variable (e.g. `http://$containerid`) but does *not* need a resolver if the hostname is hardcoded (e.g. `proxy_pass http://lxcNNNN`).
+
 ```bash
 rm -f /etc/nginx/sites-enabled/"$containerid"
 rm -f /etc/nginx/sites-available/"$containerid"
 cat <<'EOF' | tee /etc/nginx/sites-available/"$containerid" >/dev/null
 server {
 
-    set $container_id "$$containerid";
     set $use_https    "disabled";
 
     server_name $$hostnames;
     listen 80;
 
     # listen 443 ssl;
-    # ssl_certificate     /home/$container_id/ssl/$$primary_hostname/fullchain.pem;
-    # ssl_certificate_key /home/$container_id/ssl/$$primary_hostname/privkey.pem;
+    # ssl_certificate     /home/$$containerid/ssl/$$primary_hostname/fullchain.pem;
+    # ssl_certificate_key /home/$$containerid/ssl/$$primary_hostname/privkey.pem;
     # ssl_protocols       TLSv1.2;
 
     access_log /var/log/nginx/access.log normal;
 
     location ^~ /.well-known/acme-challenge/ {
-        alias /home/$container_id/acme-challenge/;
+        alias /home/$$containerid/acme-challenge/;
     }
 
     location = /.well-known/biphrost-domain-verification {
-        alias /home/$container_id/.biphrost-domain-verification;
+        alias /home/$$containerid/.biphrost-domain-verification;
     }
 
     location / {
@@ -124,16 +125,16 @@ server {
             return 301 https://$server_name$request_uri;
         }
 
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://$container_id;
+        proxy_pass http://$$containerid;
         client_max_body_size 0;
 
         location ~* \.(css|gif|ico|jpg|js|png|svg|swf|txt|woff)$ {
             proxy_cache static;
-            proxy_pass http://$container_id;
+            proxy_pass http://$$containerid;
         }
     }
 }
