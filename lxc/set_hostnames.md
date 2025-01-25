@@ -70,7 +70,7 @@ EOF
 **Update an Apache configuration, if available**
 Pretty much all containers should have at most one Apache site configuration. There may be the occasional exception, which will need to be handled by a sysop. In all other cases, we can automatically fix an Apache config.
 ```bash
-apache_config="$(find /etc/apache2/sites-available -maxdepth 1 -type f -regex '.*/.*[A-Za-z0-9-]+\.[a-z]+\.conf$')"
+apache_config="$(find /etc/apache2/sites-available -maxdepth 1 -type f -regex '.*/.*[A-Za-z0-9-]+\.[a-z]+\.conf$' 2>/dev/null)"
 count="$(echo -n "$apache_config" | grep -c '^')"
 if [ "$count" -eq 0 ]; then
     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "No Apache config files found; skipping reconfiguration."
@@ -80,11 +80,11 @@ else
     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Updating Apache configuration at $apache_config"
     sed -i 's/\(\s*#\?\s*ServerName\s\+\).*$/\1'"$default_hostname"'/g' "$apache_config"
     sed -i 's/\(\s*#\?\s*ServerAlias\s\+\).*$/\1'"$alias_names"'/g' "$apache_config"
+    if ! apachectl configtest; then
+        fail "'apachectl configtest' failed; sysop intervention is required."
+    fi
+    apachectl graceful
 fi
-if ! apachectl configtest; then
-    fail "'apachectl configtest' failed; sysop intervention is required."
-fi
-apachectl graceful
 ```
 
 **Done.**
