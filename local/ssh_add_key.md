@@ -4,7 +4,7 @@ This adds an ssh key to the specified container. If the container doesn't alread
 
 **Usage**
 ```
-echo my_public_key | sudo biphrost --info user@domain.com ssh add key [container-id]
+echo my_public_key | sudo biphrost --info user@domain.com ssh add key <container-id>
 ```
 
 **Parameters**
