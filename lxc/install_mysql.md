@@ -32,7 +32,7 @@ echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Installing mariadb on $(hos
 **Install MariaDB**
 MariaDB is present in Debian main repositories, so installation is straightforward:
 ```bash
-DEBIAN_FRONTEND=noninteractive sudo apt-get -qy install mariadb-server >/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get -qy install mariadb-server >/dev/null 2>&1
 ```
 
 **Clean up**
@@ -42,12 +42,12 @@ service mysql restart
 
 **Test passwordless login**
 ```bash
-if ! echo -e 'SELECT "OK";' | sudo mysql -s; then
+if ! echo -e 'SELECT "OK";' | mysql -s >/dev/null; then
     fail "Could not connect to the MySQL server process as root"
 fi
 ```
 
-**Complete the log**
+**Finish the log**
 ```bash
 echo "$(date +'%F')" "$(date +'%T')" "$containerid" "mariadb installation complete."
 ```
