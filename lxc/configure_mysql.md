@@ -2,6 +2,31 @@
 
 This command auto-configures a previously-installed MySQL (or MariaDB) for low-memory VPS environments.
 
+**Usage**
+```
+biphrost @<container-id> configure mysql
+```
+
+**Sanity-check invocation**
+```bash
+myinvocation="configure mysql"
+if [ "${*:1:2}" != "$myinvocation" ]; then
+    fail "[$myinvocation]: Invalid invocation"
+fi
+shift; shift
+```
+
+**Get the container label or hostname**
+Used for logging.
+```bash
+containerid="$(cat /root/.label 2>/dev/null <(hostname) | head -n 1)"
+```
+
+**Start the log**
+```bash
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Configuring mariadb on $(hostname)"
+```
+
 **Make sure MySQL or MariaDB is already installed**
 ```bash
 dpkg -l mariadb-server >/dev/null 2>&1 || dpkg -l mysql-server >/dev/null 2>&1 || fail "MariaDB or MySQL are not installed"
@@ -114,9 +139,14 @@ service mysql restart
 
 **Test login**
 ```bash
-if ! echo -e 'SELECT "OK";' | sudo mysql -s; then
+if ! echo -e 'SELECT "OK";' | mysql -s >/dev/null; then
     fail "Could not connect to the MySQL server process as root";
 fi
+```
+
+**Finish the log**
+```bash
+echo "$(date +'%F')" "$(date +'%T')" "$containerid" "mariadb configuration complete."
 ```
 
 ## References
