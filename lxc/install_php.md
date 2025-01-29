@@ -37,7 +37,7 @@ echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Installing PHP $php_version
 **Get a list of currently enabled php services**
 We'll need to know which services to re-enable later.
 ```bash
-IFS=$'\n' php_services=("$(systemctl list-unit-files | grep '.*php\S\+\s\+enabled\s' | grep -v sessionclean | cut -d ' ' -f 1)")
+IFS=$'\n' php_services=("$(/bin/systemctl -q list-unit-files | grep '.*php\S\+\s\+enabled\s' | grep -v sessionclean | cut -d ' ' -f 1)")
 ```
 
 **Stop any existing php-fpm services**
@@ -45,8 +45,8 @@ This uses a different approach to finding php-related services than the one abov
 ```bash
 echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Disabling php-related services"
 while read -r service; do
-    systemctl stop "$service"
-    systemctl disable "$service"
+    /bin/systemctl -q stop "$service"
+    /bin/systemctl -q disable "$service"
 done < <(grep -sl '^\s*#\?\s*ExecStart=[a-zA-Z0-9._/-]\+/php-fpm[0-9.]\+\s\+' /etc/systemd/system/*)
 ```
 
@@ -127,13 +127,13 @@ This configuration is intended to have a php-fpm pool configuration created for 
 ```bash
 if systemctl list-unit-files | grep -q "php$php_version-fpm\\.service"; then
     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Disabling php$php_version-fpm default service"
-    systemctl stop "php$php_version-fpm"
-    systemctl disable "php$php_version-fpm" >/dev/null
-    unit_path="$(systemctl cat "php$php_version-fpm" 2>/dev/null | grep -oP '^#\s*\K/.*/php[0-9.]+-fpm.service')"
+    /bin/systemctl -q stop "php$php_version-fpm"
+    /bin/systemctl -q disable "php$php_version-fpm" >/dev/null
+    unit_path="$(/bin/systemctl -q cat "php$php_version-fpm" 2>/dev/null | grep -oP '^#\s*\K/.*/php[0-9.]+-fpm.service')"
     if [ -n "$unit_path" ] && [ -f "$unit_path" ]; then
         rm "$unit_path"
     fi
-    systemctl daemon-reload >/dev/null
+    /bin/systemctl -q daemon-reload >/dev/null
 fi
 ```
 
@@ -154,13 +154,13 @@ TODO: May need to modify these files slightly if options change between php vers
 **Update any remaining php-fpm service files**
 If the container is already hosting PHP sites, there should be one or more remaining fpm service files.
 ```bash
-php_fpm_path="$(sudo which php-fpm"$php_version")"
+php_fpm_path="$(which php-fpm"$php_version")"
 if [ -n "$php_fpm_path" ]; then
     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Updating php-fpm service files"
     # Update an ExecStart= line that includes a parth to an fpm-config.
     # It might make more sense to break these up into a couple of different sed commands.
     sed -i -e 's|^\(\s*#*\s*ExecStart=\)/usr/s\?bin/php-fpm[0-9.]\+\s\+\(.*/etc/php/\)[0-9.]\+\(.*\)$|\1'"$php_fpm_path"' \2'"$php_version"'\3|' /etc/systemd/system/*.service
-    systemctl daemon-reload
+    /bin/systemctl -q daemon-reload
 fi
 ```
 
@@ -169,7 +169,7 @@ fi
 echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Restarting php services"
 for service in "${php_services[@]}"; do
     echo "$(date +'%F')" "$(date +'%T')" "$containerid" "    $service"
-    sudo systemctl restart "$service"
+    /bin/systemctl -q restart "$service"
 done
 ```
 
