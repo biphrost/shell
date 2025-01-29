@@ -27,24 +27,24 @@ else
     target="$1"
 fi
 if [ -z "$target" ]; then
-    echo "$(date +'%T')" "$(date +'%F')" "[$myinvocation]: No container IDs were provided and no containers were found to update"
+    echo "$(date +'%F')" "$(date +'%T')" "$(hostname): No container IDs were provided and no containers were found to update"
     exit 0
 fi
 ```
 
 **Start the log**
 ```bash
-echo "$(date +'%T')" "$(date +'%F')" "[$myinvocation]: Renewing SSL certificate for $target"
+echo "$(date +'%F')" "$(date +'%T')" "$(hostname): Renewing SSL certificate for $target"
 ```
 
 **Sanity-check the target**
 ```bash
 if [[ ! "$target" =~ lxc[0-9]{4} ]]; then
-    fail "$(date +'%T')" "[$myinvocation]: Invalid container name: $target"
+    fail "Invalid container name: $target"
 fi
 
 if [ ! -d "/home/$target" ]; then
-    fail "$(date +'%T')" "[$myinvocation]: No home directory was found for $target"
+    fail "No home directory was found for $target"
 fi
 ```
 
@@ -53,13 +53,16 @@ fi
 firstrun=0
 if [ ! -d "/home/$target/ssl" ]; then
     firstrun=1
-    mkdir -p "/home/$target/ssl"
 fi
 mkdir -p "/home/$target/acme-challenge"
+mkdir -p "/home/$target/accounts"
+mkdir -p "/home/$target/chains"
+mkdir -p "/home/$target/ssl"
 chown -R "$target":"$target" "/home/$target/acme-challenge"
 chown -R "$target":"$target" "/home/$target/accounts"
 chown -R "$target":"$target" "/home/$target/chains"
 chown -R "$target":"$target" "/home/$target/ssl"
+chmod 0755 "/home/$target/acme-challenge"
 ```
 
 **Get the hostnames that are being routed to this container.**
@@ -92,8 +95,13 @@ fi
 **Ensure we have some hostnames for our certificate request**
 ```bash
 if [ ! -s "/home/$target/ssl/hostnames" ]; then
-    fail "$(date +'%T')" "[$myinvocation]: Failed to generate the hostnames file for $target"
+    fail "Failed to generate the hostnames file for $target"
 fi
+```
+
+**Hostnames file should be owned by the LXC user**
+```bash
+chown "$target" /home/"$target"/ssl/hostnames
 ```
 
 **Copy our letsencrypt config to the container's home directory and update it**
@@ -110,7 +118,7 @@ chown "$target":"$target" "/home/$target/le_config"
 If this is the first run for Dehydrated for this host, then terms etc. need to be accepted.
 ```bash
 if [ $firstrun -gt 0 ]; then
-    echo "$(date +'%T')" "[$myinvocation]: Accepting terms of service for first run with $target"
+    echo "$(date +'%F')" "$(date +'%T')" "$(hostname): Accepting terms of service for first run with $target"
     sudo -u "$target" /usr/local/sbin/letsencrypt/dehydrated -f "/home/$target/le_config" --domains-txt "/home/$target/ssl/hostnames" -o "/home/$target/ssl" --register --accept-terms
 fi
 ```
@@ -125,9 +133,9 @@ exitcode=$?
 ```bash
 rm "/home/$target/le_config"
 if [ "$exitcode" -eq 0 ]; then
-    echo "$(date +'%T')" "[$myinvocation]: Completed successfully for $target"
+    echo "$(date +'%F')" "$(date +'%T')" "$(hostname): Completed successfully for $target"
 else
-    echo "$(date +'%T')" "[$myinvocation]: Dehydrated returned a non-zero exit status for $target"
+    echo "$(date +'%F')" "$(date +'%T')" "$(hostname): Dehydrated returned a non-zero exit status for $target"
     exit "$exitcode"
 fi
 ```
