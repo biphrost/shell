@@ -48,19 +48,16 @@ If the certificate doesn't already exist, or the hostnames in it don't match the
 ```bash
 attempts=1
 while :; do
-    if [ -f /home/"$containerid"/ssl/hostnames ]; then
-        if  [ "$(find /home/"$containerid"/ssl/hostnames -type f -newermt "30 days ago" 2>&1)" = "/home/$containerid/ssl/hostnames" ]; then
-            if [ "${hostnames[*]}" = "$(cat /home/"$containerid"/ssl/hostnames)" ]; then
-                break
-            fi
+    if [ -f /home/"$containerid"/ssl/hostnames ] && [ "$(find /home/"$containerid"/ssl/hostnames -type f -newermt "30 days ago" 2>&1)" = "/home/$containerid/ssl/hostnames" ]; then
+        if [ "${hostnames[*]}" = "$(cat /home/"$containerid"/ssl/hostnames)" ]; then
+            break
         fi
+    fi
+    if [ $attempts -lt 2 ]; then
+        attempts=$((attempts + 1))
+        biphrost -b ssl renew "$containerid"
     else
-        if [ $attempts -lt 2 ]; then
-            attempts=$((attempts + 1))
-            biphrost -b ssl renew "$containerid"
-        else
-            fail "SSL can not be enabled because the certificate's hostnames don't match the container's configuration"
-        fi
+        fail "SSL can not be enabled because the certificate's hostnames don't match the container's configuration"
     fi
 done
 ```
