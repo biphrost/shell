@@ -49,7 +49,7 @@ If the certificate doesn't already exist, or the hostnames in it don't match the
 attempts=1
 while :; do
     if [ -f /home/"$containerid"/ssl/hostnames ]; then
-        if  [ "$(find /home/"$containerid"/ssl/hostnames -type f -newermt "30 days ago" >/dev/null 2>&1)" = "/home/$containerid/ssl/hostnames" ]; then
+        if  [ "$(find /home/"$containerid"/ssl/hostnames -type f -newermt "30 days ago" 2>&1)" = "/home/$containerid/ssl/hostnames" ]; then
             if [ "${hostnames[*]}" = "$(cat /home/"$containerid"/ssl/hostnames)" ]; then
                 break
             fi
