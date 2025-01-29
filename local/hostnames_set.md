@@ -98,15 +98,15 @@ rm -f /etc/nginx/sites-available/"$containerid"
 cat <<'EOF' | tee /etc/nginx/sites-available/"$containerid" >/dev/null
 server {
 
-    set $use_https    "disabled";
+    set $use_https "disabled";
 
     server_name $$hostnames;
     listen 80;
 
     # listen 443 ssl;
-    # ssl_certificate     /home/$$containerid/ssl/$$primary_hostname/fullchain.pem;
+    # ssl_certificate     /home/$$containerid/ssl/$$primary_hostname/fullchain.pem;
     # ssl_certificate_key /home/$$containerid/ssl/$$primary_hostname/privkey.pem;
-    # ssl_protocols       TLSv1.2;
+    # ssl_protocols       TLSv1.2;
 
     access_log /var/log/nginx/access.log normal;
 
