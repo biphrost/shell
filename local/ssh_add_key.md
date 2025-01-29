@@ -104,7 +104,7 @@ fi
 
 **Return the ssh configuration for this container**
 ```bash
-primary_name="$(biphrost -b get hostnames "$container" | head -n 1)"
+primary_name="$(biphrost -b hostnames get "$container" | head -n 1)"
 echo "Host $primary_name"
 echo "    HostName $(biphrost -b get hostip)"
 echo "    User $container"
