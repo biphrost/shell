@@ -87,9 +87,9 @@ The next few steps are specific to sites using PHP with Apache. We'll need to kn
 ```bash
 php_installations="$(dpkg -l | grep -oP '^ii\s+\Kphp[0-9]+(\.[0-9]+)*-(fpm|cgi)(?=\s)' | sort -r)"
 php_version="$(echo "$php_installations" | grep -o '[0-9]\+\(\.[0-9]\+\)' | head -n 1)"
-if echo "$php_installations" | grep "$php_version" | grep 'fpm'; then
+if echo "$php_installations" | grep "$php_version" | grep -q 'fpm'; then
     php_installed="fpm"
-elif echo "$php_installations" | grep "$php_version" | grep 'cgi'; then
+elif echo "$php_installations" | grep "$php_version" | grep -q 'cgi'; then
     php_installed="cgi"
 else
     php_installed=""

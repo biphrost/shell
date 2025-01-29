@@ -27,9 +27,9 @@ There's no point in doing anything further if PHP is not installed in this conta
 ```bash
 php_installations="$(dpkg -l | grep -oP '^ii\s+\Kphp[0-9]+(\.[0-9]+)*-(fpm|cgi)(?=\s)' | sort -r)"
 php_version="$(echo "$php_installations" | grep -o '[0-9]\+\(\.[0-9]\+\)' | head -n 1)"
-if echo "$php_installations" | grep "$php_version" | grep 'fpm'; then
+if echo "$php_installations" | grep "$php_version" | grep -q 'fpm'; then
     php_installed="fpm"
-elif echo "$php_installations" | grep "$php_version" | grep 'cgi'; then
+elif echo "$php_installations" | grep "$php_version" | grep -q 'cgi'; then
     php_installed="cgi"
 else
     exit 0
@@ -87,8 +87,8 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target
 EOF
-    /bin/systemctl enable /etc/systemd/system/php-"$(hostname)".service >/dev/null
-    /bin/systemctl daemon-reload
+    /bin/systemctl -q enable /etc/systemd/system/php-"$(hostname)".service >/dev/null
+    /bin/systemctl -q daemon-reload
 fi
 ```
 
