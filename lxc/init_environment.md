@@ -23,10 +23,10 @@ echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Initializing operating syst
 
 **Update packages, install some common requirements**
 This isn't an aggressive stripdown of preinstalled packages, but we can nuke a few that are especially large, unnecessary, or problematic.
-* `exim4-base` was added to this list because the package managed to land in Debian repos with a problem and it doesn't seem to be required by anything else.
+* `exim4-base` was added to this list because the package managed to land in Debian repos with a problem and it doesn't seem to be required by anything else. Containers do not need a mail daemon (and are not allowed to use standard inbound or outbound mail ports on the internet).
 * `ssl_cert` was added to this list also because it landed in Debian repos with a problem, isn't required by anything else, and was causing `apt` operations to fail.
 ```bash
-apt-get -y purge joe gcc-9-base libavahi* exim4-base ssl_cert >/dev/null 2>&1
+apt-get -y purge joe gcc-9-base libavahi* exim4-base exim4-config ssl_cert >/dev/null 2>&1
 apt-get -y autoremove >/dev/null 2>&1
 echo "$(date +'%F')" "$(date +'%T')" "$containerid" "Removed cruft"
 if apt-get -y update >/dev/null; then
@@ -51,7 +51,7 @@ hostname -F /etc/hostname
 **Configure sshd**
 ```bash
 # shellcheck disable=SC2086
-sed -i 's/^#*\s*PermitRootLogin\s\+.*$/PermitRootLogin no\nAllowGroups '$containerid'/g' /etc/ssh/sshd_config
+sed -i 's/^#*\s*PermitRootLogin\s\+.*$/PermitRootLogin no\nAllowGroups lxcusers/g' /etc/ssh/sshd_config
 sed -i 's/^#*\s*X11Forwarding\s\+.*$/X11Forwarding no/g' /etc/ssh/sshd_config
 sed -i 's/^#*\s*PasswordAuthentication\s\+.*$/PasswordAuthentication no/g' /etc/ssh/sshd_config
 if ! sshd -t; then
