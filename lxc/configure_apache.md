@@ -77,9 +77,9 @@ chown lxcuser:lxcusers /srv/www/"$(hostname)"
 chown -R lxcuser:lxcusers /srv/www/"$(hostname)"/public_html /srv/www/"$(hostname)"/tmp
 chmod 0755 /srv/www
 chmod 0755 /srv/www/"$(hostname)"
-chmod 0755 /srv/www/"$(hostname)"/public_html
-find /srv/www/"$(hostname)"/public_html -type d -exec chmod 0755 '{}' \;
-find /srv/www/"$(hostname)"/public_html -type f -exec chmod 0644 '{}' \;
+chmod 0775 /srv/www/"$(hostname)"/public_html
+find /srv/www/"$(hostname)"/public_html -type d -exec chmod 0775 '{}' \;
+find /srv/www/"$(hostname)"/public_html -type f -exec chmod 0664 '{}' \;
 ```
 
 **Check for a PHP installation**
