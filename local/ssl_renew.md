@@ -87,15 +87,13 @@ done | sort -n | cut -d ' ' -f 2 | xargs | tee "/home/$target/ssl/hostnames" >/d
 
 The `hostnames` file should be left in the container's home directory because it's used as a validation check when enabling SSL.
 ```bash
-if [ -x /usr/local/sbin/biphrost ]; then
-    /usr/local/sbin/biphrost -b hostnames get "$target" --verify | xargs | tee "/home/$target/ssl/hostnames" >/dev/null
-fi
+biphrost -b hostnames get "$target" --verify | xargs | tee "/home/$target/ssl/hostnames" >/dev/null
 ```
 
 **Ensure we have some hostnames for our certificate request**
 ```bash
-if [ ! -s "/home/$target/ssl/hostnames" ]; then
-    fail "Failed to generate the hostnames file for $target"
+if [ ! -s "/home/$target/ssl/hostnames" ] || ! grep -q '[A-Za-z0-9.-]\+' "/home/$target/ssl/hostnames"; then
+    fail "Failed to generate the hostnames file for $target; is its DNS pointed here?"
 fi
 ```
 
