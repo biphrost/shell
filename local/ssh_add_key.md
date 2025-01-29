@@ -107,7 +107,7 @@ fi
 primary_name="$(biphrost -b hostnames get "$container" | head -n 1)"
 echo "Host $primary_name"
 echo "    HostName $(biphrost -b get hostip)"
-echo "    User $container"
+echo "    User $username"
 echo "    HostKeyAlias $primary_name"
 echo "    IdentityFile /path/to/private/key"
 echo "    ProxyCommand sh -c \"knock -u -d 100 %h ${knock1} ${knock2} ${knock3}; sleep 1; nc %h %p\""
